@@ -12,6 +12,7 @@ class Swiftlint
     Dir.chdir options.delete(:pwd) if options.key? :pwd
 
     # run swiftlint with provided options
+    puts("#{swiftlint_path} #{cmd} #{swiftlint_arguments(options, additional_swiftlint_args)}")
     `#{swiftlint_path} #{cmd} #{swiftlint_arguments(options, additional_swiftlint_args)}`
   end
 
