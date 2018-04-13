@@ -2,8 +2,19 @@
 
 # A wrapper to use SwiftLint via a Ruby API.
 class Swiftlint
+
+  # The list of config files availables in the source
+  attr_reader :config_files
+
   def initialize(swiftlint_path = nil)
     @swiftlint_path = swiftlint_path
+    @config_files = Dir.glob('./**/.swiftlint.yml')
+                       .reject { |filepath| filepath.include?('Carthage' || 'Pods') }
+                       .map { |filepath| File.dirname(filepath) }
+                       .map { |filepath| filepath[1..-1] }
+                       .reject(&:empty?)
+                       .sort_by(&:length)
+                       .reverse
   end
 
   # Runs swiftlint
@@ -11,8 +22,14 @@ class Swiftlint
     # change pwd before run swiftlint
     Dir.chdir options.delete(:pwd) if options.key? :pwd
 
+    # format the path to compare it
+    file_path = File.dirname(options[:path]).delete('\\', '')
+    # find the deepest dir with a config file contained in the filepath
+    config_file = @config_files.find { |path| file_path.include? path }
+    # replace the default config file if there is one deepest in the path
+    options[:config] = (config_file[1..-1].gsub(' ', '\\ ') + '/.swiftlint.yml') unless config_file.nil?
+
     # run swiftlint with provided options
-    puts("#{swiftlint_path} #{cmd} #{swiftlint_arguments(options, additional_swiftlint_args)}")
     `#{swiftlint_path} #{cmd} #{swiftlint_arguments(options, additional_swiftlint_args)}`
   end
 
